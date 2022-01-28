@@ -39,37 +39,78 @@ var printLine = function (text, breakLine) {
     if (breakLine === void 0) { breakLine = true; }
     process.stdout.write(text + (breakLine ? '\n' : ''));
 };
-var promptInput = function (text) { return __awaiter(void 0, void 0, void 0, function () {
+var readLine = function () { return __awaiter(void 0, void 0, void 0, function () {
     var input;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0:
-                printLine("\n" + text + "\n> ", false);
-                return [4 /*yield*/, new Promise(function (resolve) { return process.stdin.once('data', function (data) {
-                        return resolve(data.toString());
-                    }); })];
+            case 0: return [4 /*yield*/, new Promise(function (resolve) {
+                    return process.stdin.once('data', function (data) { return resolve(data.toString()); });
+                })];
             case 1:
                 input = _a.sent();
                 return [2 /*return*/, input.trim()];
         }
     });
 }); };
+var promptInput = function (text) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        printLine("\n" + text + "\n> ", false);
+        return [2 /*return*/, readLine()];
+    });
+}); };
+var promptSelect = function (text, values) { return __awaiter(void 0, void 0, void 0, function () {
+    var input;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                printLine("\n" + text);
+                values.forEach(function (value) {
+                    printLine("- " + value);
+                });
+                printLine("> ", false);
+                return [4 /*yield*/, readLine()];
+            case 1:
+                input = (_a.sent());
+                if (values.includes(input)) {
+                    return [2 /*return*/, input];
+                }
+                else {
+                    return [2 /*return*/, promptSelect(text, values)];
+                }
+                return [2 /*return*/];
+        }
+    });
+}); };
+var modes = ['normal', 'hard'];
 var HitAndBlow = /** @class */ (function () {
-    function HitAndBlow(mode) {
+    function HitAndBlow() {
         this.answerSource = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',];
         this.answer = [];
         this.tryCount = 0;
-        this.mode = mode;
+        this.mode = 'normal';
     }
     HitAndBlow.prototype.setting = function () {
-        var answerLength = this.getAnswerLength();
-        while (this.answer.length < answerLength) {
-            var randNum = Math.floor(Math.random() * this.answerSource.length);
-            var selectedItem = this.answerSource[randNum];
-            if (!this.answer.includes(selectedItem)) {
-                this.answer.push(selectedItem);
-            }
-        }
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, answerLength, randNum, selectedItem;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = this;
+                        return [4 /*yield*/, promptSelect('モードを入力してください', modes)];
+                    case 1:
+                        _a.mode = _b.sent();
+                        answerLength = this.getAnswerLength();
+                        while (this.answer.length < answerLength) {
+                            randNum = Math.floor(Math.random() * this.answerSource.length);
+                            selectedItem = this.answerSource[randNum];
+                            if (!this.answer.includes(selectedItem)) {
+                                this.answer.push(selectedItem);
+                            }
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
     };
     HitAndBlow.prototype.getAnswerLength = function () {
         switch (this.mode) {
@@ -77,6 +118,9 @@ var HitAndBlow = /** @class */ (function () {
                 return 3;
             case 'hard':
                 return 4;
+            default:
+                var neverValue = this.mode;
+                throw new Error(neverValue + " \u306F\u7121\u52B9\u306A\u30E2\u30FC\u30C9\u3067\u3059");
         }
     };
     HitAndBlow.prototype.play = function () {
@@ -150,10 +194,12 @@ var HitAndBlow = /** @class */ (function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                hitAndBlow = new HitAndBlow('hard');
-                hitAndBlow.setting();
-                return [4 /*yield*/, hitAndBlow.play()];
+                hitAndBlow = new HitAndBlow();
+                return [4 /*yield*/, hitAndBlow.setting()];
             case 1:
+                _a.sent();
+                return [4 /*yield*/, hitAndBlow.play()];
+            case 2:
                 _a.sent();
                 hitAndBlow.end();
                 return [2 /*return*/];
