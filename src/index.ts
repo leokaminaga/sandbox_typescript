@@ -32,6 +32,27 @@ const promptSelect = async <T extends string>(text: string, values: readonly T[]
 const modes = ['normal' , 'hard'] as const
 type Mode = typeof modes[number]
 
+class GameProcedure {
+    private currentGameTitle = 'hit and blow'
+    private currentGame = new HitAndBlow()
+
+    public async start() {
+        await this.play()
+    }
+
+    private async play() {
+        printLine(`===\n${this.currentGameTitle} を開始します。\n===`)
+        await this.currentGame.setting()
+        await this.currentGame.play()
+        this.currentGame.end()
+    }
+
+    private end() {
+        printLine('ゲームを終了しました。')
+        process.exit()
+    }
+}
+
 class HitAndBlow {
     private readonly answerSource: ReadonlyArray<string> = ['0', '1','2', '3','4', '5','6', '7','8', '9',]
     private answer: string[] = []
@@ -120,13 +141,5 @@ class HitAndBlow {
 }
 
 ;(async ()=> {
-    // const name = await promptInput('名前を入力して下さい')
-    // console.log(name)
-    // const age = await promptInput('年齢を入力してください')
-    // console.log(age)
-    // process.exit()
-    const hitAndBlow = new HitAndBlow()
-    await hitAndBlow.setting()
-    await hitAndBlow.play()
-    hitAndBlow.end()
+    new GameProcedure().start()
 })()
