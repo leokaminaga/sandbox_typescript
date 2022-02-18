@@ -32,7 +32,17 @@ const promptSelect = async <T extends string>(text: string, values: readonly T[]
 const modes = ['normal' , 'hard'] as const
 type Mode = typeof modes[number]
 
+const nextActions = ['play again', 'exit'] as const
+type NextAction = typeof nextActions[number]
+
+type GameStore = {
+    'hit and blow': HitAndBlow
+    'janken': Janken
+}
+
 class GameProcedure {
+    constructor(private readonly gameStore: GameStore) {  }
+
     private currentGameTitle = 'hit and blow'
     private currentGame = new HitAndBlow()
 
@@ -45,6 +55,16 @@ class GameProcedure {
         await this.currentGame.setting()
         await this.currentGame.play()
         this.currentGame.end()
+
+        const action = await promptSelect<NextAction>('ゲームを抜けますか？', nextActions)
+        if (action == 'play again') {
+            await this.play()
+        } else if (action == 'exit') {
+            this.end()
+        } else {
+            const neverValue: never = action
+            throw new Error(`${neverValue} is an invalid action.`)
+        }
     }
 
     private end() {
@@ -62,7 +82,7 @@ class HitAndBlow {
     async setting() {
         this.mode = await promptSelect<Mode>('モードを入力してください', modes)
         const answerLength = this.getAnswerLength()
-        
+
         while (this.answer.length < answerLength) {
             const randNum = Math.floor(Math.random() * this.answerSource.length)
             const selectedItem = this.answerSource[randNum]
@@ -137,9 +157,101 @@ class HitAndBlow {
    end() {
        printLine(`正解です！\n試行回数: ${this.tryCount}回`)
        process.exit
+       this.reset()
    }
+
+   private reset() {
+        this.answer = []
+       this.tryCount = 0
+    }
 }
 
+const jankenOptions = ['rock', 'paper', 'scissors'] as const
+type JankenOption = typeof jankenOptions[number]
+
+class Janken {
+    private rounds = 0
+    private currentRound = 1
+    private result = {
+        win: 0,
+        lose: 0,
+        draw: 0,
+    }
+
+    async setting() {
+        const rounds = Number(await promptInput('何本勝負にしますか？'))
+        if (Number.isInteger(rounds) && 0 < rounds) {
+            this.rounds = rounds
+        } else {
+            await this.setting()
+        }
+    }
+
+    async play() {
+        const userSelected = await promptSelect(`【${this.currentRound}回戦】選択肢を入力してください。`, jankenOptions)
+        const randomSelected = jankenOptions[Math.floor(Math.random() * 3)]
+        const result = Janken.judge(userSelected, randomSelected)
+        let resultText: string
+
+        switch (result) {
+            case 'win':
+                this.result.win += 1
+                resultText = '勝ち'
+                break
+            case 'lose':
+                this.result.lose += 1
+                resultText = '負け'
+                break
+            case 'draw':
+                this.result.draw += 1
+                resultText = 'あいこ'
+                break
+        }
+        printLine(`---\nあなた: ${userSelected}\n相手${randomSelected}\n${resultText}\n---`)
+
+        if (this.currentRound < this.rounds) {
+            this.currentRound += 1
+            await this.play()
+        }
+    }
+
+    end() {
+        printLine(`\n${this.result.win}勝${this.result.lose}敗${this.result.draw}引き分けでした。`)
+        this.reset()
+    }
+
+    private reset() {
+        this.rounds = 0
+        this.currentRound = 1
+        this.result = {
+            win: 0,
+            lose: 0,
+            draw: 0,
+        }
+    }
+
+    static judge(userSelected: JankenOption, randomSelected: JankenOption) {
+        if (userSelected === 'rock') {
+            if (randomSelected === 'rock') return 'draw'
+            if (randomSelected === 'paper') return 'lose'
+            return 'win'
+        } else if (userSelected === 'paper') {
+            if (randomSelected === 'rock') return 'win'
+            if (randomSelected === 'paper') return 'draw'
+            return 'lose'
+        } else {
+            if (randomSelected === 'rock') return 'lose'
+            if (randomSelected === 'paper') return 'win'
+            return 'draw'
+        }
+    }
+}
+
+
 ;(async ()=> {
-    new GameProcedure().start()
+    // awaitいる？
+    await new GameProcedure({
+        'hit and blow': new HitAndBlow(),
+        'janken': new Janken(),
+    }).start()
 })()
