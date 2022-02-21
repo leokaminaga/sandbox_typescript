@@ -83,17 +83,22 @@ var promptSelect = function (text, values) { return __awaiter(void 0, void 0, vo
 }); };
 var modes = ['normal', 'hard'];
 var nextActions = ['play again', 'exit'];
+var gameTitles = ['hit and blow', 'janken'];
 var GameProcedure = /** @class */ (function () {
-    function GameProcedure() {
-        this.currentGameTitle = 'hit and blow';
-        this.currentGame = new HitAndBlow();
+    function GameProcedure(gameStore) {
+        this.gameStore = gameStore;
+        this.currentGameTitle = '';
+        this.currentGame = null;
     }
     GameProcedure.prototype.start = function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.play()];
+                    case 0: return [4 /*yield*/, this.select()];
                     case 1:
+                        _a.sent();
+                        return [4 /*yield*/, this.play()];
+                    case 2:
                         _a.sent();
                         return [2 /*return*/];
                 }
@@ -106,6 +111,8 @@ var GameProcedure = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        if (!this.currentGame)
+                            throw new Error('ゲームが選択されていません');
                         printLine("===\n" + this.currentGameTitle + " \u3092\u958B\u59CB\u3057\u307E\u3059\u3002\n===");
                         return [4 /*yield*/, this.currentGame.setting()];
                     case 1:
@@ -139,6 +146,23 @@ var GameProcedure = /** @class */ (function () {
     GameProcedure.prototype.end = function () {
         printLine('ゲームを終了しました。');
         process.exit();
+    };
+    GameProcedure.prototype.select = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = this;
+                        return [4 /*yield*/, promptSelect('ゲームのタイトルを入力してください.', gameTitles)];
+                    case 1:
+                        _a.currentGameTitle =
+                            _b.sent();
+                        this.currentGame = this.gameStore[this.currentGameTitle];
+                        return [2 /*return*/];
+                }
+            });
+        });
     };
     return GameProcedure;
 }());
@@ -253,10 +277,127 @@ var HitAndBlow = /** @class */ (function () {
     };
     return HitAndBlow;
 }());
+var jankenOptions = ['rock', 'paper', 'scissors'];
+var Janken = /** @class */ (function () {
+    function Janken() {
+        this.rounds = 0;
+        this.currentRound = 1;
+        this.result = {
+            win: 0,
+            lose: 0,
+            draw: 0
+        };
+    }
+    Janken.prototype.setting = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var rounds, _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = Number;
+                        return [4 /*yield*/, promptInput('何本勝負にしますか？')];
+                    case 1:
+                        rounds = _a.apply(void 0, [_b.sent()]);
+                        if (!(Number.isInteger(rounds) && 0 < rounds)) return [3 /*break*/, 2];
+                        this.rounds = rounds;
+                        return [3 /*break*/, 4];
+                    case 2: return [4 /*yield*/, this.setting()];
+                    case 3:
+                        _b.sent();
+                        _b.label = 4;
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    Janken.prototype.play = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var userSelected, randomSelected, result, resultText;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, promptSelect("\u3010" + this.currentRound + "\u56DE\u6226\u3011\u9078\u629E\u80A2\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002", jankenOptions)];
+                    case 1:
+                        userSelected = _a.sent();
+                        randomSelected = jankenOptions[Math.floor(Math.random() * 3)];
+                        result = Janken.judge(userSelected, randomSelected);
+                        switch (result) {
+                            case 'win':
+                                this.result.win += 1;
+                                resultText = '勝ち';
+                                break;
+                            case 'lose':
+                                this.result.lose += 1;
+                                resultText = '負け';
+                                break;
+                            case 'draw':
+                                this.result.draw += 1;
+                                resultText = 'あいこ';
+                                break;
+                        }
+                        printLine("---\n\u3042\u306A\u305F: " + userSelected + "\n\u76F8\u624B" + randomSelected + "\n" + resultText + "\n---");
+                        if (!(this.currentRound < this.rounds)) return [3 /*break*/, 3];
+                        this.currentRound += 1;
+                        return [4 /*yield*/, this.play()];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    Janken.prototype.end = function () {
+        printLine("\n" + this.result.win + "\u52DD" + this.result.lose + "\u6557" + this.result.draw + "\u5F15\u304D\u5206\u3051\u3067\u3057\u305F\u3002");
+        this.reset();
+    };
+    Janken.prototype.reset = function () {
+        this.rounds = 0;
+        this.currentRound = 1;
+        this.result = {
+            win: 0,
+            lose: 0,
+            draw: 0
+        };
+    };
+    Janken.judge = function (userSelected, randomSelected) {
+        if (userSelected === 'rock') {
+            if (randomSelected === 'rock')
+                return 'draw';
+            if (randomSelected === 'paper')
+                return 'lose';
+            return 'win';
+        }
+        else if (userSelected === 'paper') {
+            if (randomSelected === 'rock')
+                return 'win';
+            if (randomSelected === 'paper')
+                return 'draw';
+            return 'lose';
+        }
+        else {
+            if (randomSelected === 'rock')
+                return 'lose';
+            if (randomSelected === 'paper')
+                return 'win';
+            return 'draw';
+        }
+    };
+    return Janken;
+}());
 ;
 (function () { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        new GameProcedure().start();
-        return [2 /*return*/];
+        switch (_a.label) {
+            case 0: 
+            // awaitいる？
+            return [4 /*yield*/, new GameProcedure({
+                    'hit and blow': new HitAndBlow(),
+                    'janken': new Janken()
+                }).start()];
+            case 1:
+                // awaitいる？
+                _a.sent();
+                return [2 /*return*/];
+        }
     });
 }); })();
