@@ -32,15 +32,13 @@ const promptSelect = async <T extends string>(text: string, values: readonly T[]
 const modes = ['normal' , 'hard'] as const
 type Mode = typeof modes[number]
 
-const nextActions = ['play again', 'exit'] as const
+const nextActions = ['play again', 'change game','exit'] as const
 type NextAction = typeof nextActions[number]
 
 const gameTitles = ['hit and blow', 'janken'] as const
 type GameTitle = typeof gameTitles[number]
-
 type GameStore = {
-    'hit and blow': HitAndBlow
-    'janken': Janken
+    [key in GameTitle]: HitAndBlow | Janken
 }
 
 class GameProcedure {
@@ -63,9 +61,12 @@ class GameProcedure {
         this.currentGame.end()
 
         const action = await promptSelect<NextAction>('ゲームを抜けますか？', nextActions)
-        if (action == 'play again') {
+        if (action === 'play again') {
             await this.play()
-        } else if (action == 'exit') {
+        } else if (action === 'change game') {
+            await this.select()
+            await this.play()
+        } else if (action === 'exit') {
             this.end()
         } else {
             const neverValue: never = action
