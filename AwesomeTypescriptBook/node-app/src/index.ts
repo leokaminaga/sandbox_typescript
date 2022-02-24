@@ -1,3 +1,5 @@
+import {promises} from "dns";
+
 const printLine = (text: string, breakLine: boolean = true) => {
     process.stdout.write(text + (breakLine ? '\n' : ''))
 }
@@ -38,14 +40,14 @@ type NextAction = typeof nextActions[number]
 const gameTitles = ['hit and blow', 'janken'] as const
 type GameTitle = typeof gameTitles[number]
 type GameStore = {
-    [key in GameTitle]: HitAndBlow | Janken
+    [key in GameTitle]: Game
 }
 
 class GameProcedure {
     constructor(private readonly gameStore: GameStore) {  }
 
     private currentGameTitle: GameTitle | '' = ''
-    private currentGame: HitAndBlow | Janken | null = null
+    private currentGame: Game | null = null
 
     public async start() {
         await this.select()
@@ -86,7 +88,13 @@ class GameProcedure {
     }
 }
 
-class HitAndBlow {
+abstract class Game {
+    abstract setting(): Promise<void>
+    abstract play(): Promise<void>
+    abstract end(): void
+}
+
+class HitAndBlow implements Game{
     private readonly answerSource: ReadonlyArray<string> = ['0', '1','2', '3','4', '5','6', '7','8', '9',]
     private answer: string[] = []
     private tryCount = 0
