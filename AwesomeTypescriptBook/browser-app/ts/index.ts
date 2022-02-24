@@ -1,2 +1,12 @@
+class Application {
+    start() {
+        const button = document.getElementById('deleteAllDoneTask')
+        if (!button) return
+        console.log(button)
+    }
+}
 
-console.log('hello world')
+window.addEventListener('load', () => {
+    const app = new Application()
+    app.start()
+})
