@@ -14,5 +14,9 @@
   "devDependencies": {
     "@types/node": "^16.4.13",
     "typescript": "^4.3.5"
+  },
+  "volta": {
+    "node": "14.19.0",
+    "yarn": "1.22.17"
   }
 }
